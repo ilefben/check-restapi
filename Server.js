@@ -1,19 +1,12 @@
 const mongoose = require("mongoose");
 const express = require("express");
-const user = require("./models/User");
-dotenv.config({ path: "./config/.env" });
+const User = require("./models/User");
+const connectdb = require("./config/connect");
+require("dotenv").config({ path: "./config/save.env" });
 const app = express();
-const PORT = 3000;
+const PORT = 4000;
 app.use(express.json());
-mongoose.connect(process.env.DB_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
-db.once("open", () => {
-  console.log("Connected to MongoDB");
-});
+connectdb();
 //GET
 app.get("/users", async (req, res) => {
   try {
@@ -47,10 +40,12 @@ app.put("/users/:id", async (req, res) => {
 //DELETE
 app.delete("/users/:id", async (req, res) => {
   try {
-    const deletedUser = await User.findByIdAndRemove(req.params.id);
-    res.json(deletedUser);
+    const deletedUser = await User.findOneAndRemove({
+      _id: req.params.id,
+    }).exec();
+    res.status(200).send(deletedUser);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).send({ msg: "error" });
   }
 });
 app.listen(PORT, () => {
